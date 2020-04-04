@@ -514,6 +514,7 @@ function show_image_grid_view() {
 //
 // Handlers for top navigation bar
 //
+// rb-step1
 function sel_local_images() {
   // source: https://developer.mozilla.org/en-US/docs/Using_files_from_web_applications
   if (invisible_file_input) {
@@ -656,7 +657,9 @@ function import_annotations_from_csv(data) {
 
       var filename = d[parsed_header.filename_index];
       var size     = d[parsed_header.size_index];
-      var img_id   = _via_get_image_id(filename, size);
+      var path     = d[parsed_header.path_index]
+      //rb-todo check how indidces are set
+      var img_id   = _via_get_image_id(filename, size, path);
 
       // check if file is already present in this project
       if ( ! _via_img_metadata.hasOwnProperty(img_id) ) {
@@ -898,11 +901,13 @@ function coco_to_via(coco) {
   // add all files and annotations
   for ( var coco_img_index in coco.images ) {
     var filename = coco.images[coco_img_index]['file_name'];
+    var path = coco.images[coco_img_index]['path'];
+    //rb-todo filgure out how coco images are organized
     if ( coco.images[coco_img_index].hasOwnProperty('coco_url') ) {
       filename = coco.images[coco_img_index]['coco_url'];
     }
     var size = -1;
-    var via_img_id = _via_get_image_id(filename, size);
+    var via_img_id = _via_get_image_id(filename, size, path);
     var coco_img_id = coco.images[coco_img_index]['id'];
     var width = coco.images[coco_img_index]['width'];
     var height = coco.images[coco_img_index]['height'];
@@ -1098,12 +1103,15 @@ function clone_value(value) {
   return value;
 }
 
-function _via_get_image_id(filename, size) {
-  if ( typeof(size) === 'undefined' ) {
-    return filename;
-  } else {
-    return filename + size;
-  }
+//rb-step4
+function _via_get_image_id(filename, size, path) {
+  var name = ''
+  name += filename;
+  if ( typeof(size) != 'undefined' )
+    name += size;
+  if ( typeof(path) != 'undefined' )
+    name += path;
+  return name;
 }
 
 function load_text_file(text_file, callback_function) {
@@ -7243,28 +7251,29 @@ function project_remove_file(img_index) {
   _via_img_count -= 1;
 }
 
-function project_add_new_file(filename, size, file_id) {
+function project_add_new_file(filename, size, file_id, path) {
   var img_id = file_id;
   if ( typeof(img_id) === 'undefined' ) {
     if ( typeof(size) === 'undefined' ) {
       size = -1;
     }
-    img_id = _via_get_image_id(filename, size);
+    img_id = _via_get_image_id(filename, size, path);
   }
 
   if ( ! _via_img_metadata.hasOwnProperty(img_id) ) {
     _via_img_metadata[img_id] = new file_metadata(filename, size);
-    _via_image_id_list.push(img_id);
+    _via_image_id_list.push(img_id); //rb-latest
     _via_image_filename_list.push(filename);
     _via_img_count += 1;
   }
   return img_id;
 }
 
+//rb-step2
 function project_file_add_local(event) {
   var user_selected_images = event.target.files;
   var original_image_count = _via_img_count;
-
+  console.log(user_selected_images);
   var new_img_index_list = [];
   var discarded_file_count = 0;
   for ( var i = 0; i < user_selected_images.length; ++i ) {
@@ -7272,8 +7281,11 @@ function project_file_add_local(event) {
     if ( filetype === 'image' ) {
       var filename = user_selected_images[i].name;
       var size     = user_selected_images[i].size;
-      var img_id1  = _via_get_image_id(filename, size);
-      var img_id2  = _via_get_image_id(filename, -1);
+
+      var path     = user_selected_images[i].webkitRelativePath;
+      console.log(path)
+      var img_id1  = _via_get_image_id(filename, size, path);
+      var img_id2  = _via_get_image_id(filename, -1, path);
       var img_id   = img_id1;
 
       if ( _via_img_metadata.hasOwnProperty(img_id1) || _via_img_metadata.hasOwnProperty(img_id2) ) {
@@ -7286,7 +7298,7 @@ function project_file_add_local(event) {
           _via_img_metadata[img_id].size = size;
         }
       } else {
-        img_id = project_add_new_file(filename, size);
+        img_id = project_add_new_file(filename, size, undefined, path);
         _via_img_fileref[img_id] = user_selected_images[i];
         set_file_annotations_to_default_value(img_id);
       }

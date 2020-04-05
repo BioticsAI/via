@@ -343,9 +343,11 @@
                 <option value="files_without_region">Show files without regions</option>
                 <option value="files_missing_region_annotations">Show files missing region annotations</option>
                 <option value="files_missing_file_annotations">Show files missing file annotations</option>
+                <option value="files_matching_file_attribute_condition">Show files matching attribute value</option>
                 <option value="files_error_loading">Files that could not be loaded</option>
                 <option value="regex">Regular Expression</option>
               </select>
+              <input style="width:50%" type="text" placeholder="attribute search" oninput="img_fn_list_on_attribute_search()" id="img_fn_list_on_attribute_search" title="Filter using attribute search">
               <input style="width:50%" type="text" placeholder="regular expression" oninput="img_fn_list_onregex()" id="img_fn_list_regex" title="Filter using regular expression">
             </div>
           </div>

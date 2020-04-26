@@ -4780,6 +4780,25 @@ function update_img_fn_list() {
   }
 }
 
+function img_fn_list_on_attribute_search() {
+  var p = document.getElementById('filelist_preset_filters_list');
+  var att_search = document.getElementById('img_fn_list_on_attribute_search').value;
+  if ( att_search === '' )
+  {
+    p.selectedIndex = 0;
+  }
+  else {
+    var i;
+    for ( i=0; i<p.options.length; ++i ) {
+      if ( p.options[i].value === 'files_matching_file_attribute_condition' ) {
+        p.selectedIndex = i;
+        break;
+      }
+    }
+  }
+  img_fn_list_onpresetfilter_select();
+}
+
 function img_fn_list_onregex() {
   var regex = document.getElementById('img_fn_list_regex').value;
   img_fn_list_generate_html( regex );
@@ -4838,6 +4857,11 @@ function img_fn_list_onpresetfilter_select() {
           add_to_list = true;
         }
         break;
+      case 'files_matching_file_attribute_condition':
+        if ( is_file_annotation_matching_condition(img_id) ) {
+          add_to_list = true;
+        }
+        break;
       case 'files_error_loading':
         if ( _via_image_load_error[i] === true ) {
           add_to_list = true;
@@ -4853,6 +4877,50 @@ function img_fn_list_onpresetfilter_select() {
     img_fn_list_scroll_to_current_file();
     break;
   }
+}
+
+function is_file_annotation_matching_condition(img_id)
+{
+  console.log("Starting searching by attribute value"); // example:alex
+  // If empty, add everything:
+  var search_value = document.getElementById("img_fn_list_on_attribute_search").value;
+  if (search_value === '')
+  {
+    return true;
+  }
+  // If you need to search on 1 attribute, search on that:
+  var attribute_to_search_for = "";
+  if (search_value.search(":") != -1)
+  {
+    var search_value_array = search_value.split(':');
+    attribute_to_search_for = search_value_array[0];
+    search_value = search_value_array[1];
+  }
+
+  if (attribute_to_search_for)
+  {
+      console.log("Searching for [" + search_value + "] in attribute" + attribute_to_search_for);
+      if ( _via_img_metadata[img_id].file_attributes[attribute_to_search_for] === search_value) 
+      {
+        return true;
+      }
+      return false;
+  }
+  // Otherwise, search everything:
+  console.log("Searching for [" + search_value + "] in all attributes");
+  var file_attribute;
+  for ( file_attribute in _via_attributes['file'] ) {
+    if ( _via_img_metadata[img_id].file_attributes.hasOwnProperty(file_attribute) ) {
+      // Exact match:
+      if ( _via_img_metadata[img_id].file_attributes[file_attribute] === search_value) 
+      {
+        return true;
+      }
+    } else {
+      return true;
+    }
+  }
+  return false;
 }
 
 function is_region_annotation_missing(img_id) {
